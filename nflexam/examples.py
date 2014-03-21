@@ -1,43 +1,47 @@
 import nflexam
+
+# For convenience when reload(example) in ipython.
 reload(nflexam)
 
-# cat1 = ['passing_att', 'passing_cmp', 'passing_yds', 'passing_tds', 'passing_ratio', 'yards_per_pass', 'receiving_yac_yds', 'rushing_att', 'rushing_yds', 'rushing_tds', 'yards_per_rush']
-# stats1 = nflexam.stats_all_teams_season(2013, cat1)
-# nflexam.stats_csv(stats1, '../stats1.csv')
+path_file_name = '../matlab/data'
+path_file_name2 = '../matlab/data5_'
 
-# cat2 = ['passing_tds', 'passing_int', 'passing_ratio', 'yards_per_pass', 'rushing_tds', 'yards_per_rush']
-# stats2 = nflexam.stats_all_teams_season(2013, cat2)
-# nflexam.stats_csv(stats2, '../stats2.csv')
+cats = [
+# data1.csv
+['passing_att', 'passing_cmp', 'passing_yds', 'passing_tds', 'passing_ratio', 'yards_per_pass', 'receiving_yac_yds', 'rushing_att', 'rushing_yds', 'rushing_tds', 'yards_per_rush'],
 
-# cat3 = ['passing_ratio', 'yards_per_pass', 'yards_per_rush']
-# stats3 = nflexam.stats_all_teams_season(2013, cat3)
-# nflexam.stats_csv(stats3, '../matlab/stats3.csv')
+# data2.csv
+['passing_ratio', 'yards_per_pass', 'yards_per_rush'],
 
-# cat4 = ['passing_att', 'passing_cmp', 'passing_yds', 'passing_tds', 'passing_int', 'passing_ratio', 'yards_per_pass', 'receiving_yac_yds', 'rushing_att', 'rushing_yds', 'rushing_tds', 'yards_per_rush', 'punting_yds', 'puntret_yds']
-# stats4 = nflexam.stats_all_teams_season(2013, cat4)
-# nflexam.stats_csv(stats4, '../matlab/stats4.csv')
+# data3.csv
+['passing_tds', 'passing_ratio', 'yards_per_pass', 'rushing_tds', 'yards_per_rush', 'punting_tot', 'punting_i20', 'kicking_fgm', 'defense_tkl_loss', 'defense_sk', 'defense_safe', 'defense_pass_def', 'defense_int', 'defense_ffum'],
 
-# cat5 = ['passing_yds', 'passing_tds', 'passing_ratio', 'yards_per_pass', 'receiving_yac_yds', 'rushing_yds', 'rushing_tds', 'yards_per_rush', 'defense_int', 'fumbles_forced']
-# stats5 = nflexam.stats_all_teams_season(2013, cat5)
-# nflexam.stats_csv(stats5, '../matlab/stats5.csv')
+# data4.csv
+['passing_tds', 'yards_per_pass', 'rushing_tds', 'yards_per_rush', 'turnovers_taken', 'total_points'],
 
-# cat6 = ['passing_att', 'passing_cmp', 'passing_yds', 'passing_tds', 'passing_ratio', 'yards_per_pass', 'receiving_yac_yds', 'rushing_att', 'rushing_yds', 'rushing_tds', 'yards_per_rush', 'defense_int', 'fumbles_forced']
-# stats6 = nflexam.stats_all_teams_season(2013, cat6)
-# nflexam.stats_csv(stats6, '../matlab/stats6.csv')
+# data5.csv
+['passing_tds_points', 'rushing_tds_points', 'defense_tds_points', 'kicking_fgm_points', 'kicking_xpmade_points', 'passing_twoptm_points', 'rushing_twoptm_points', 'defense_safe_points']
+]
 
-# cat7 = ['passing_tds', 'passing_int', 'passing_ratio', 'yards_per_pass', 'rushing_tds', 'yards_per_rush', 'turnovers_taken', 'total_points']
-# stats7 = nflexam.stats_all_teams_season(2013, cat7)
-# nflexam.stats_csv(stats7, '../matlab/stats7.csv')
+# data1.csv to data5.csv are generated here.
+# for (i, cat) in enumerate(cats):
+# 	data = nflexam.stats_all_teams_season(2013, cat)
+# 	nflexam.stats_csv(data, path_file_name + str(i+1) + '.csv')
 
-# cat8 = ['passing_tds', 'yards_per_pass', 'rushing_tds', 'yards_per_rush', 'turnovers_taken', 'total_points']
-# stats8 = nflexam.stats_all_teams_season(2013, cat8)
-# nflexam.stats_csv(stats8, '../matlab/stats8.csv')
+# data5_2009.csv to data5_2013.csv are generated here.
+# for i in range(0, 5):
+# 	data = nflexam.stats_all_teams_season(2009+i, cats[4])
+# 	nflexam.stats_csv(data, path_file_name2 + str(2009+i) + '.csv')
 
-cat8_home = ['passing_tds', 'yards_per_pass', 'rushing_tds', 'yards_per_rush', 'turnovers_taken', 'total_points']
-stats8_home = nflexam.stats_all_teams_season(2013, cat8_home, home=True)
-nflexam.stats_csv(stats8_home, '../matlab/stats8_home.csv')
+# data5_home.csv and data5_away.csv are generated here.
+data = nflexam.stats_all_teams_season(2013, cats[4], home=True, away=False)
+nflexam.stats_csv(data, '../matlab/data5_home.csv')
 
-cat8_away = ['passing_tds', 'yards_per_pass', 'rushing_tds', 'yards_per_rush', 'turnovers_taken', 'total_points']
-stats8_away = nflexam.stats_all_teams_season(2013, cat8_away, away=True)
-nflexam.stats_csv(stats8_away, '../matlab/stats8_away.csv')
+data = nflexam.stats_all_teams_season(2013, cats[4], home=False, away=True)
+nflexam.stats_csv(data, '../matlab/data5_away.csv')
 
+# Helper function for identifying the stat category given the index.
+def get_cat(cat, index):
+	one_cat = cat-1;
+	double_cat = cats[one_cat] + cats[one_cat]
+	return double_cat[index-1]

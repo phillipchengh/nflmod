@@ -1,19 +1,21 @@
-function home_stats = home_field(stats_home, stats_away, k)
+function home_stats = home_field(stats_home, stats_away)
 	% Plots each team's score and comparison with actual rankings.
 
-	stats_pca_home = pca(stats_home);
-	stats_pca_away = pca(stats_away);
-	num_teams = size(stats_home, 1);
-	scores_home = zeros(k, 32);
-	scores_away = zeros(k, 32);
+	% PCA and scores. Uses only components with >= 1% variance.
+	[stats_pca_home scores_home latent tsquared explained1] = pca(stats_home);
+	[stats_pca_away scores_away latent tsquared explained2] = pca(stats_away);
+	k1 = max(find(explained1 >= 1));
+	k2 = max(find(explained2 >= 1));
+	k = min([k1 k2]);
+	fprintf('Default k: %i\n', k);
+	[stats_pca_home scores_home latent tsquared explained] = pca(stats_home, 'NumComponents', k);
+	[stats_pca_away scores_away latent tsquared explained] = pca(stats_away, 'NumComponents', k);
 
-	% Calculate scores by multipling with stats and pca weights.
-	for i = 1:num_teams
-		for j = 1:k
-			scores_home(j, i) = stats_home(i,:)*stats_pca_home(:,j);
-			scores_away(j, i) = stats_away(i,:)*stats_pca_away(:,j);
-		end
-	end
+	num_teams = size(stats_home, 1);
+
+	% Transpose for convenience.
+	scores_home = scores_home'
+	scores_away = scores_away'
 
 	% Append each team's total score.
 	scores_home = rank_teams(scores_home, stats_pca_home);
@@ -24,7 +26,7 @@ function home_stats = home_field(stats_home, stats_away, k)
 	total_away = scores_away(k+1,:);
 
 	% Construct home stats.
-	home_stats = [total_home; total_away; total_home-total_away];
+	home_stats = [total_home; total_away; abs(total_home-total_away)];
 	home_stats = teams(home_stats);
 
 	% Sort each column by ascending total score.
@@ -33,23 +35,25 @@ function home_stats = home_field(stats_home, stats_away, k)
 
 	figure
 	plot(sorted_total, 'go')
+	title(strcat('Ascending disparity with home vs. away.'))
+	xlabel('Sorted teams')
+	ylabel('Disparity')
 	text(1:size(sorted_total,2), sorted_total, home_stats(1,:), 'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right')
 	
-	% Sort by ascending home score.
-	sorted_home = sort_row(home_stats, 2);
-	sorted_total = cell2mat(sorted_home(2,:));
+	sorted_total = cell2mat(home_stats(2,:));
 
 	figure
 	plot(sorted_total, 'r+')
-	text(1:size(sorted_total,2), sorted_total, sorted_home(1,:), 'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right')
+	title('Inline home vs. away comparison.')
+	xlabel('Sorted teams')
+	ylabel('Total score')
+	text(1:size(sorted_total,2), sorted_total, home_stats(1,:), 'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right')
 
-	% Sort by ascending home score.
-	sorted_away = sort_row(home_stats, 3);
-	sorted_total = cell2mat(sorted_away(3,:));
+	sorted_total = cell2mat(home_stats(3,:));
 
 	hold on
 	plot(sorted_total, 'b*')
-	text(1:size(sorted_total,2), sorted_total, sorted_away(1,:), 'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right')
+	text(1:size(sorted_total,2), sorted_total, home_stats(1,:), 'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right')
 
 	l = legend('Home', 'Away');
 	set(l, 'Location', 'SouthEast')
