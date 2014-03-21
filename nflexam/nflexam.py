@@ -19,25 +19,37 @@ def stats_csv(stats, filename='stats.csv'):
 		for row in stats:
 			stat_writer.writerow(row)
 
-def stats_all_teams_season(season_year, cat, transpose=False):
-	"""Return a list of season stat rows with cat categories corresponding to each NFL team."""
+def stats_all_teams_season(season_year, cat, home=False, away=False):
+	"""Return a list of season stat rows with cat categories corresponding to each NFL team.
+	home=True specifies a query of only home games.
+	away=True specifies a query of only away games."""
 	stats = []
 	for team in teams:
-		stats += [stats_team_season(season_year, cat, team)]
-	if transpose:
-		stats = [list(row) for row in zip(*stats)]	
+		stats += [stats_team_season(season_year, cat, team, home, away)]
 	return stats
 
-def stats_team_season(season_year, cat, team):
-	"""Return a stat row with cat categories corresponding to team."""
+def stats_team_season(season_year, cat, team, home, away):
+	"""Return a stat row with cat categories corresponding to team.
+	home=True specifies a query of only home games.
+	away=True specifies a query of only away games."""
 	q = nfldb.Query(db)
 	q.game(season_year=season_year, season_type='Regular', team=team)
-	players = q.play(team=team).as_aggregate()
+	if home and not away:
+		q.game(home_team=team)
+	if away and not home:
+		q.game(away_team=team)
+	q.play(team=team)
+	players = q.as_aggregate()
 	stats_row = []
 	stats_row += stats_query(players, cat)
 	q2 = nfldb.Query(db)
 	q2.game(season_year=season_year, season_type='Regular', team=team)
-	away_players = q2.play(team__ne=team).as_aggregate()
+	if home and not away:
+		q2.game(home_team=team)
+	if away and not home:
+		q2.game(away_team=team)
+	q2.play(team__ne=team)
+	away_players = q2.as_aggregate()
 	stats_row += stats_query(away_players, cat)
 	return stats_row
 
@@ -64,10 +76,14 @@ def stats_custom(players, cat, stats):
 			stats[i] = stats_yards_per_pass(players)
 		elif c == 'yards_per_rush':
 			stats[i] = stats_yards_per_rush(players)
+		elif c == 'turnovers_taken':
+			stats[i] = stats_turnovers_taken(players)
+		elif c =='total_points':
+			stats[i] = stats_total_points(players)
 	return stats
 
 def stats_passing_ratio(players):
-	"""Return passing_ratio from players."""
+	"""Return passing_ratio from players. passing_ratio = passing_cmp / passing_att"""
 	cat = ['passing_att', 'passing_cmp']
 	stats = stats_nfldb_query(players, cat)
 	if stats[0] == 0:
@@ -76,7 +92,7 @@ def stats_passing_ratio(players):
 		return (round(float(stats[1]) / stats[0], 2))
 
 def stats_yards_per_pass(players):
-	"""Return yards_per_pass from players."""
+	"""Return yards_per_pass from players. yards_per_pass = passing_yds / passing_att"""
 	cat = ['passing_att', 'passing_yds']
 	stats = stats_nfldb_query(players, cat)
 	if stats[0] == 0:
@@ -85,13 +101,27 @@ def stats_yards_per_pass(players):
 		return (round(float(stats[1]) / stats[0], 2))
 
 def stats_yards_per_rush(players):
-	"""Return yards_per_rush from players."""
+	"""Return yards_per_rush from players. yards_per_rush = rushing_yds / rushing_att"""
 	cat = ['rushing_att', 'rushing_yds']
 	stats = stats_nfldb_query(players, cat)
 	if stats[0] == 0:
 		return 0
 	else:
 		return (round(float(stats[1]) / stats[0], 2))
+
+def stats_turnovers_taken(players):
+	"""Return turnovers_taken from players. turnovers_taken = defense_frec + defense_int"""
+	cat = ['defense_frec', 'defense_int']
+	stats = stats_nfldb_query(players, cat)
+	return (stats[0] + stats[1])
+
+
+def stats_total_points(players):
+	"""Return total_points from players.
+	total_points = offense_tds*6 + defense_tds*6 + kicking_fgm*3 + kicking_xpmade*1 + passing_twoptm*2 + rushing_twoptm*2"""
+	cat = ['offense_tds', 'defense_tds', 'kicking_fgm', 'kicking_xpmade', 'passing_twoptm', 'rushing_twoptm']
+	stats = stats_nfldb_query(players, cat)
+	return (stats[0]*6 + stats[1]*6 + stats[2]*3 + stats[3]*1 + stats[4]*2 + stats[5]*2)
 
 def stats_passing(players):
 	"""Return [passing_att, passing_cmp, passing_yds, passing_tds, passing_int, passing_ratio, yards_per_pass] of input PlayPlayers."""
